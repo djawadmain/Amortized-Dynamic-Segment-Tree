@@ -4,9 +4,7 @@
 #include <iostream>
 #include <vector>
 
-using namespace std;
 typedef long long ll;
-
 
 struct Node {
     int prior, sz, l, r;
@@ -18,7 +16,8 @@ struct Node {
 
 struct ImplicitTreap {
 
-    vector<Node> t;
+    std::vector<Node> t;
+    
     int root;
     unsigned int seed;
 
