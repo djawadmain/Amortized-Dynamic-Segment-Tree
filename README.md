@@ -1,5 +1,3 @@
-# Beyond Treaps: A Hardware-Aware, Cache-Friendly Amortized Dynamic Segment Tree
-
 ## The Origin & The Benchmarks: A Hardware-Aware Approach
 
 A few months ago, I independently conceptualized an idea for a dynamic data structure. However, it wasn't until recently that I finally found the time to sit down and write a truly optimized, production-ready implementation for it. 
@@ -23,12 +21,12 @@ Once I finished my implementation, I decided to benchmark it against highly opti
 
 ### The Benchmarks
 
-#### Test 1: Pure Chaos (Random N Insertion + N Update + N Get)
+#### Test 1: Random Operations (Random N Insertion + N Update + N Get)
 *The ultimate test for branch prediction and cache misses.*
 
 | N = | 200000 | 500000 | 1000000 | 2000000 |
 | :---: | :---: | :---: | :---: | :---: |
-| **Amortized Rebuilding Tree** | **250ms** | **1050ms** | **2900ms** | **7900ms** |
+| **Amortized Dynamic Segment Tree** | **250ms** | **1050ms** | **2900ms** | **7900ms** |
 | **Implicit Treap** | 470ms | 1580ms | 4600ms | 12100ms |
 | **Splay Tree** | 520ms | 1700ms | 4900ms | 13200ms |
 
@@ -37,16 +35,16 @@ Once I finished my implementation, I decided to benchmark it against highly opti
 
 | N = | 200000 | 500000 | 1000000 | 2000000 |
 | :---: | :---: | :---: | :---: | :---: |
-| **Amortized Rebuilding Tree** | **230ms** | **790ms** | **2200ms** | **5500ms** |
+| **Amortized Dynamic Segment Tree** | **230ms** | **790ms** | **2200ms** | **5500ms** |
 | **Splay Tree** | 330ms | 1020ms | 2750ms | 7500ms |
 | **Implicit Treap** | 360ms | 1050ms | 2800ms | 7750ms |
 
-#### Test 3: The Finishing Blow (Random N Insertion + 2N Update + 2N Get)
+#### Test 3: Heavy Range Query (Random N Insertion + 2N Update + 2N Get)
 *Doubling the range queries to test traversal efficiency.*
 
 | N = | 200000 | 500000 | 1000000 | 2000000 |
 | :---: | :---: | :---: | :---: | :---: |
-| **Amortized Rebuilding Tree** | **420ms** | **1680ms** | **5050ms** | **13900ms** |
+| **Amortized Dynamic Segment Tree** | **420ms** | **1680ms** | **5050ms** | **13900ms** |
 | **Implicit Treap** | 830ms | 2820ms | 8550ms | 22100ms |
 | **Splay Tree** | 880ms | 2950ms | 8650ms | 23500ms |
 
@@ -129,11 +127,30 @@ This subtree will not be rebuilt again until its total size reaches $2^{k+1}$ (w
 This guarantees that the size ratio between any two siblings will never exceed **$3:1$**. Because a fraction of the subtree (at least $1/4$) is always dropped as we move down a level, the maximum depth of the tree is strictly bounded by $O(\log_{4/3} N)$, which simplifies to $O(\log N)$. All standard `Get` and `Update` operations traverse this strictly logarithmic height.
 
 ### 2. The Amortized Rebuild Cost
-Why is the rebuilding process so cheap? Let's track the "life" of a single inserted node.
 
-A node only participates in a `ReBuild` when one of its ancestors reaches a size that is a power of 2 ($2, 4, 8, 16, \dots$). Because the maximum size of the tree is $N$, a single node will participate in at most $\log_2 N$ rebuilds throughout its entire existence. 
+**Why is the rebuilding process so efficient?**
 
-Since the `ReBuild` function is purely linear $O(S)$ relative to the subtree size $S$, the cost distributed to each individual node during a rebuild is $O(1)$. Therefore, every inserted node pays an amortized cost of exactly $O(\log N)$ for all future restructurings. 
+To understand why the `ReBuild` function doesn't cause a Time Limit Exceeded (TLE), let's analyze its amortized cost. 
+
+Suppose we trigger a rebuild operation on a node when its size reaches $sz = 2^k$. Because of our condition, we know that at some point in the past, this exact node was a perfectly balanced subtree with a size of $sz = 2^{k-1}$.
+
+This implies that since the last time this node was perfect, exactly $2^{k-1}$ `Insert` operations have been performed inside its subtree. The time complexity to entirely rebuild this subtree of size $2^k$ is $O(2^k)$.
+
+To find the amortized cost, we can distribute this $O(2^k)$ rebuild cost across the $2^{k-1}$ newly inserted elements that led to this rebuild. Since $O(2^k) = O(2 \cdot 2^{k-1})$, the cost distributed to each individual insertion is:
+
+$$\frac{O(2^k)}{2^{k-1}} = O(1)$$
+
+This means every time we insert an element, it effectively "pays" an $O(1)$ amortized cost towards the future rebuild of this specific node.
+
+**Total Time Complexity:**
+
+In our Segment Tree, the maximum depth is bounded by $O(\log n)$. Therefore, any single inserted element contributes to the size of at most $O(\log n)$ ancestor nodes. 
+
+Since each element pays an $O(1)$ amortized rebuild cost for each of its ancestors, the total number of operations contributed by $n$ insertions across the entire tree is:
+
+$$n \times O(\log n) = O(n \log n)$$
+
+Thus, the overall time complexity for all rebuilding operations combined is strictly bounded by $O(n \log n)$, making it incredibly fast and well within the standard time limits!
 
 ---
 
@@ -232,9 +249,13 @@ Here we have the standard `Merge` and `Relax` functions for lazy propagation. Th
 
 You can treat these three functions as a black box, but here is how they work behind the scenes to keep the tree perfectly balanced without wasting memory:
 
+
 *   **`Found_Ids`**: Traverses the subtree and collects the indices of all leaves in sorted order into the `lid` vector, and the internal nodes into the `pid` vector. 
+
 *   **Memory Efficiency**: By collecting existing IDs, we reuse allocated memory instead of building entirely new nodes.
+
 *   **`Set_Ids`**: Uses the collected `pid` and `lid` arrays to construct a perfectly balanced Segment Tree.
+
 
 ```cpp
     void Found_Ids(int id, int &pt1, int &pt2) {
@@ -279,8 +300,11 @@ This is the core of the dynamic structure.
 The variable `fr` stores the highest node (ancestor) that requires a rebuild to maintain balance. Since rebuilding an ancestor automatically fixes all its descendants, finding the highest necessary node is sufficient.
 
 Inside `Insert_DFS`:
+
 *   **Leaf Case:** If we reach a leaf, we split it into two nodes using unused indices (`nc + 1` and `nc + 2`). We swap siblings if their order is incorrect based on `k`, merge, and move on.
+
 *   **Internal Node Case:** We route the query to the correct child based on subtree sizes and merge on our way up.
+
 *   **Balance Condition:** If our subtree size is exactly a power of 2 (checked via `(seg[id].sz & (seg[id].sz - 1)) == 0`), we set `fr = id` to schedule a rebuild for this subtree.
 
 ```cpp
