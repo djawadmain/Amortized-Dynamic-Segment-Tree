@@ -8,7 +8,7 @@ Curious to see if anyone else had thought of this, I dug deep into the Codeforce
 
 I realized that instead of doing local AVL rotations, we could completely ditch tree rotations and use an **Amortized Subtree Rebuilding** approach (conceptually similar to Scapegoat Trees). This eliminates branch-heavy balancing logic and, more importantly, allows us to physically defragment the tree in memory during rebuilds, achieving absolute maximum cache-friendliness.
 
-Once I finished my implementation, I decided to benchmark it against highly optimized, memory-leak-free versions of **Implicit Treap** and **Splay Tree**. Frankly, I didn't expect much at first, but seeing the mind-blowing results is exactly what motivated me to push this forward and share it with the community.
+Once I finished my implementation, I decided to benchmark it against highly optimized, memory-leak-free versions of **Implicit Treap** and **Splay Tree**. Frankly, I didn't expect much at first, but seeing the great results is exactly what motivated me to push this forward and share it with the community.
 
 ---
 
@@ -55,19 +55,7 @@ Once I finished my implementation, I decided to benchmark it against highly opti
 These numbers tell a fascinating story. This isn't just an algorithmic improvement; it's a victory of **hardware-aware, cache-friendly architecture** over traditional pointer-chasing. 
 
 *   **The Cache Dominance:** Even in the second test (N Push Fronts)—which is theoretically the Splay Tree's absolute home ground—our array-based structure outperforms it by a wide margin. Modern CPUs heavily favor linear memory access (Pre-allocation) over $O(1)$ pointer rotations.
-*   **Non-Destructive Queries:** The performance gap becomes a chasm in the third test (Heavy Range Queries). In a Treap, a range query is a "destructive" operation requiring multiple `Split` and `Merge` calls. In our structure, range queries are completely static and non-destructive—acting exactly like a standard Segment Tree—allowing it to traverse the data at lightning speed without moving a single pointer.
-
-### The Memory Footprint: Lean & Predictable
-
-In competitive programming, strict 256MB memory limits can turn pointer-heavy structures into a nightmare. Classic Treaps and Splay Trees often suffer from the massive overhead of dynamic allocations (`new Node`), which causes heap fragmentation, or they require bulky pre-allocated static arrays with manual garbage collection.
-
-This structure bypasses those issues entirely through a **contiguous, flat-array design**:
-
-*   **Upfront Contiguous Allocation:** By passing the maximum expected size `n` to the constructor, the tree instantly allocates exactly the required space using `Add_More_Space(n)`. This reserves a single, flat block of memory (`2N - 1` nodes) right at the start. The result? Zero dynamic allocation overhead during queries, zero heap fragmentation, and absolute maximum cache locality.
-*   **Dynamic Scalability:** Don't know the exact maximum size beforehand? No problem. You can call the `Add_More_Space` function at any point to dynamically expand the capacity on the fly. While pre-allocating is heavily recommended to squeeze out every last drop of performance, this flexibility ensures you are never boxed in.
-*   **Zero-Waste Rebuilding:** The true magic of the `ReBuild` operation is that it is 100% memory-neutral. We don't instantiate new nodes or leak memory. Instead, we systematically harvest the `lid` (leaf IDs) and `pid` (parent IDs) of the existing subtree and simply rewire them. Your memory footprint remains strictly bounded and perfectly clean from start to finish.
-
----
+*   **Non-Destructive Queries:** The performance gap becomes a chasm in the third test (Heavy Range Queries). In a Treap, a range query is a "destructive" operation requiring multiple `Split` and `Merge` calls. In our structure, range queries are completely static and non-destructive—acting exactly like a standard Segment Tree—allowing it to traverse the data at high speed without moving a single pointer.
 
 ### A Respectful Disclaimer
 
