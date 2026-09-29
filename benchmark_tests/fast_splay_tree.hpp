@@ -4,17 +4,19 @@
 #include<iostream>
 #include<vector>
 
+typedef long long ll;
+
 struct SplayTree {
     
     struct Node {
         int ch[2], p, sz;
-        long long val, sum, lazy;
+        ll val, sum, lazy;
     };
 
     std::vector<Node> tr;
     int root;
 
-    inline int new_node(long long v, int p){
+    inline int new_node(ll v, int p){
         tr.push_back({{0, 0}, p, 1, v, v, 0});
         return tr.size() - 1;
     }
@@ -35,7 +37,7 @@ struct SplayTree {
         tr[x].sum = tr[tr[x].ch[0]].sum + tr[tr[x].ch[1]].sum + tr[x].val;
     }
 
-    inline void apply(int x, long long v) {
+    inline void apply(int x, ll v) {
         if (!x) return;
         tr[x].val += v;
         tr[x].sum += v * tr[x].sz;
@@ -112,7 +114,7 @@ struct SplayTree {
         return 0;
     }
 
-    inline void insert(int pos, long long val) {
+    inline void insert(int pos, ll val) {
         int l_node = kth(pos);
         splay(l_node, 0);
         int r_node = kth(pos + 1);
@@ -125,7 +127,7 @@ struct SplayTree {
         push_up(l_node);
     }
 
-    inline void update_range(int l, int r, long long val) {
+    inline void update_range(int l, int r, ll val) {
         int l_node = kth(l);
         splay(l_node, 0);
         int r_node = kth(r + 2);
@@ -136,7 +138,7 @@ struct SplayTree {
         push_up(l_node);
     }
 
-    inline long long query_range(int l, int r) {
+    inline ll query_range(int l, int r) {
         int l_node = kth(l);
         splay(l_node, 0);
         int r_node = kth(r + 2);
