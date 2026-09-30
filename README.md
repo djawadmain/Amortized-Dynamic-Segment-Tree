@@ -87,14 +87,9 @@ Instead of global rebuilds, we can apply a simple rule to rebuild specific subtr
 
 > **Rule:** Whenever the size of a subtree (after insertions) becomes exactly $X = 2^k$ (where $k \ge 2$), rebuild that specific subtree.
 
-We can prove that this simple condition is sufficient to achieve an amortized $O(N \log N)$ complexity:
+We can prove that this simple condition is sufficient to achieve an amortized $O(N \log N)$ complexity and the tree height is also bounded by $O(\log N)$
 
-1. **Height Bound:** By ensuring we rebuild subtrees when they hit powers of two, the tree's height remains strictly bounded to $O(\log N)$.
-2. **Amortized Cost:** Every time an element participates in a rebuild, the size of its subtree has doubled. Therefore, any single element will be part of a rebuild operation at most $\log N$ times. 
-
-As a result, the amortized cost for rebuilding operations across the entire execution drops perfectly to $O(N \log N)$, giving us a highly efficient segment tree that handles arbitrary insertions smoothly!
-
-
+This height condition allows us to solve standard segment tree queries in $O(\log N)$.
 
 ## The Math: Why Does This Work? 
 
@@ -393,3 +388,7 @@ To implement `Erase` while maintaining our amortized $O(N \log N)$ complexity, y
 4. During this rebuild, simply drop all the soft-deleted nodes and physically reconstruct the tree using only the active elements.
 
 While this keeps the time complexity theoretically intact, it dirties the elegant black-box code and adds a constant-factor penalty (slowing down the structure by roughly 10% to 20%). For problems that only require dynamic insertions and range queries, the current append-only version is significantly cleaner and faster.
+
+implementations possible. 
+
+If you have any tips or suggestions to improve them, feel free to let me know in the comments!
