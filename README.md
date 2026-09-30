@@ -389,6 +389,3 @@ To implement `Erase` while maintaining our amortized $O(N \log N)$ complexity, y
 
 While this keeps the time complexity theoretically intact, it dirties the elegant black-box code and adds a constant-factor penalty (slowing down the structure by roughly 10% to 20%). For problems that only require dynamic insertions and range queries, the current append-only version is significantly cleaner and faster.
 
-implementations possible. 
-
-If you have any tips or suggestions to improve them, feel free to let me know in the comments!
