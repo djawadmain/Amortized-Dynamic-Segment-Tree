@@ -8,7 +8,7 @@ typedef long long ll;
 
 struct S{
 
-    int lc, rc, sz, cost;
+    int lc, rc, sz;
     ll sum, lazy;
 };
 
