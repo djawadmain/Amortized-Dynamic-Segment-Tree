@@ -1,12 +1,12 @@
 ## The Origin & The Benchmarks: A Hardware-Aware Approach
 
-A few months ago, I independently conceptualized an idea for a dynamic data structure. However, it wasn't until recently that I finally found the time to sit down and write a truly optimized, production-ready implementation for it. 
+A few months ago, I independently conceptualized an idea for an amortized dynamic data structure. However, it wasn't until recently that I finally found the time to sit down and write a truly optimized, production-ready implementation for it. 
 
 Curious to see if anyone else had thought of this, I dug deep into the Codeforces archives and stumbled upon a heavily forgotten [blog post from 12 years ago](http://codeforces.com/blog/entry/12285). The author successfully implemented the core base-logic: traversing down to a leaf and splitting it into two new children. 
 
 **However, there was a major bottleneck in that ancient version:** It relied on **AVL Tree Rotations** (`left_rotate`, `right_rotate`) to keep the height balanced. In modern competitive programming, heavy pointer-chasing and branch-heavy rotation conditions destroy Cache Locality and inflate the constant factor massively.
 
-I realized that instead of doing local AVL rotations, we could completely ditch tree rotations and use an **Amortized Subtree Rebuilding** approach (conceptually similar to Scapegoat Trees). This eliminates branch-heavy balancing logic and, more importantly, allows us to physically defragment the tree in memory during rebuilds, achieving absolute maximum cache-friendliness.
+I realized that instead of doing local AVL rotations, we could completely ditch tree rotations and use an **Amortized Subtree Rebuilding** approach (conceptually similar to Scapegoat Trees). This eliminates branch-heavy balancing logic and, more importantly, allows us to physically defragment the tree in memory during rebuilds, achieving simple fast solution.
 
 Once I finished my implementation, I decided to benchmark it against highly optimized, memory-leak-free versions of **Implicit Treap** and **Splay Tree**. Frankly, I didn't expect much at first, but seeing the great results is exactly what motivated me to push this forward and share it with the community.
 
@@ -52,10 +52,11 @@ Once I finished my implementation, I decided to benchmark it against highly opti
 
 ### What Are We Looking At?
 
-These numbers tell a fascinating story. This isn't just an algorithmic improvement; it's a victory of **hardware-aware, cache-friendly architecture** over traditional pointer-chasing. 
+Ultimately, these numbers are a testament to the sheer speed of simplicity. I didn't throw any heavy or crazy optimizations at this, yet it still comfortably beat the highly optimized versions of Treap and Splay trees in **speed**.
 
-*   **The Cache Dominance:** Even in the second test (N Push Fronts)—which is theoretically the Splay Tree's absolute home ground—our array-based structure outperforms it by a wide margin. Modern CPUs heavily favor linear memory access (Pre-allocation) over $O(1)$ pointer rotations.
-*   **Non-Destructive Queries:** The performance gap becomes a chasm in the third test (Heavy Range Queries). In a Treap, a range query is a "destructive" operation requiring multiple `Split` and `Merge` calls. In our structure, range queries are completely static and non-destructive—acting exactly like a standard Segment Tree—allowing it to traverse the data at high speed without moving a single pointer.
+We aren't doing anything strange or overly complex in this algorithm. The main takeaway for me is that simpler algorithms generally just leave you with a lot more room to optimize later on. 
+
+Because of that, if you ever find yourself needing a standard Segment Tree (with lazy propagation or ...) that actually supports direct insertions, I really think this approach could come in handy.
 
 ### A Respectful Disclaimer
 
@@ -133,7 +134,7 @@ Since each element pays an $O(1)$ amortized rebuild cost for each of its ancesto
 
 $$n \times O(\log n) = O(n \log n)$$
 
-Thus, the overall time complexity for all rebuilding operations combined is strictly bounded by $O(n \log n)$, making it incredibly fast and well within the standard time limits!
+Thus, the overall time complexity for all rebuilding operations combined is strictly bounded by $O(n \log n)$, making it fast and well within the standard time limits.
 
 ---
 
@@ -373,6 +374,13 @@ Finally, we have the standard Lazy Segment Tree operations for range updates and
 
 ---
 
+## Full Template & Implementation
+
+Since the snippet above focuses on the core mechanics, you can find my complete, ready-to-use C++ template here:
+*[Link to Full Source Code on GitHub](https://github.com/djawadmain/Amortized-Dynamic-Segment-Tree)*
+
+---
+
 ## A Note on Deletion (`Erase` Operation)
 
 You might have noticed that I didn't include a deletion function in the implementation. If your problem strictly requires erasing elements, it is entirely possible to add it, though it comes with a trade-off.
@@ -389,3 +397,7 @@ To implement `Erase` while maintaining our amortized $O(N \log N)$ complexity, y
 
 While this keeps the time complexity theoretically intact, it dirties the elegant black-box code and adds a constant-factor penalty (slowing down the structure by roughly 10% to 20%). For problems that only require dynamic insertions and range queries, the current append-only version is significantly cleaner and faster.
 
+## A Note on Benchmarks
+
+I used Ubuntu for benchmarks and recently I found out that Codeforces uses *Windows* so I decided to run the benchmarks on Codeforces servers as well and what happened was that the *treap* and *splay* codes got much slower in the benchmarks and I also noticed that my code didn't get as slow as those two and it was almost the same as what I had tested on my system.
+This shows that my data structure performance against treap and splay on Windows is much better than its performance on Ubuntu .
