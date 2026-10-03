@@ -148,7 +148,11 @@ struct SegTree {
 
         Merge(id);
 
-        if ((seg[id].sz & (seg[id].sz - 1)) == 0) fr = id;
+        int sl = seg[lc].sz, sr = seg[rc].sz;
+        if (std::max(sl, sr) == std::min(sl, sr) * 3) fr = id;
+
+        // Slow And Normal Version:
+        // if ((seg[id].sz & (seg[id].sz - 1)) == 0) fr = id;
     }
 
     void insert_index(int k, int x){
