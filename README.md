@@ -29,6 +29,7 @@ Once I finished my implementation, I decided to benchmark it against highly opti
 | **Amortized Dynamic Segment Tree** | **250ms** | **1050ms** | **2900ms** | **7900ms** |
 | **Implicit Treap** | 470ms | 1580ms | 4600ms | 12100ms |
 | **Splay Tree** | 520ms | 1700ms | 4900ms | 13200ms |
+| **Optimized Amortized Dynamic Segment Tree (new)** | 210ms | 750ms | 2150ms | 5700ms |
 
 #### Test 2: The Splay Illusion (N Push Front + Random N Update + N Get)
 *Designed specifically to test the absolute best-case scenario for Splay Trees.*
@@ -38,6 +39,7 @@ Once I finished my implementation, I decided to benchmark it against highly opti
 | **Amortized Dynamic Segment Tree** | **230ms** | **790ms** | **2200ms** | **5500ms** |
 | **Splay Tree** | 330ms | 1020ms | 2750ms | 7500ms |
 | **Implicit Treap** | 360ms | 1050ms | 2800ms | 7750ms |
+| **Optimized Amortized Dynamic Segment Tree (new)** | 210ms | 780ms | 2150ms | 5300ms |
 
 #### Test 3: Heavy Range Query (Random N Insertion + 2N Update + 2N Get)
 *Doubling the range queries to test traversal efficiency.*
@@ -47,6 +49,7 @@ Once I finished my implementation, I decided to benchmark it against highly opti
 | **Amortized Dynamic Segment Tree** | **420ms** | **1680ms** | **5050ms** | **13900ms** |
 | **Implicit Treap** | 830ms | 2820ms | 8550ms | 22100ms |
 | **Splay Tree** | 880ms | 2950ms | 8650ms | 23500ms |
+| **Optimized Amortized Dynamic Segment Tree (new)** | 360ms | 1350ms | 3850ms | 10250ms |
 
 ---
 
@@ -315,6 +318,11 @@ Inside `Insert_DFS`:
         Merge(id);
 
         if ((seg[id].sz & (seg[id].sz - 1)) == 0) fr = id;
+
+        // Faster Version :
+        
+        // int sl = seg[lc].sz, sr = seg[rc].sz;
+        // if (max(sl, sr) == min(sl, sr) * 3) fr = id;
     }
 
     void insert_index(int k, int x) {
@@ -397,7 +405,11 @@ To implement `Erase` while maintaining our amortized $O(N \log N)$ complexity, y
 
 While this keeps the time complexity theoretically intact, it dirties the elegant black-box code and adds a constant-factor penalty (slowing down the structure by roughly 10% to 20%). For problems that only require dynamic insertions and range queries, the current append-only version is significantly cleaner and faster.
 
-## A Note on Benchmarks
+**A Note On Benchmarks**
 
 I used Ubuntu for benchmarks and recently I found out that Codeforces uses *Windows* so I decided to run the benchmarks on Codeforces servers as well and what happened was that the *treap* and *splay* codes got much slower in the benchmarks and I also noticed that my code didn't get as slow as those two and it was almost the same as what I had tested on my system.
 This shows that my data structure performance against treap and splay on Windows is much better than its performance on Ubuntu .
+
+**Update 1:**
+
+I attempted to optimize this data structure with a simple modification: while the amortized cost remained the same $O(N \log N)$, the performance improved dramatically. I applied the same 3:1 ratio concept used in the amortized analysis proof; however, instead of rebuilding at powers of two sizes, I trigger a rebuild whenever the ratio of heavy-to-light child nodes hits exactly 3. The time complexity remains unchanged, yet the code runs significantly faster. These updated benchmarks have been added as a new version, and the changes are available on GitHub.
